@@ -8,10 +8,11 @@
     body {
       margin: 0;
       font-family: 'Poppins', sans-serif;
-      background: linear-gradient(180deg, #fff 0%, #ffe3dc 100%);
-      color: #333;
+      background: linear-gradient(180deg, #ffd6e0 0%, #ffe8ec 50%, #fff5f6 100%);
+      color: #3d2b2b;
       line-height: 1.6;
     }
+
     header {
       background: #fff;
       text-align: center;
@@ -21,84 +22,106 @@
       top: 0;
       z-index: 10;
     }
+
     header h1 {
       margin: 0;
-      font-size: 2.2em;
+      font-size: 2.3em;
       background: linear-gradient(90deg, #ff7a7a, #ffb36b);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
+
     header p {
       margin: 0.5em 0 0;
       font-weight: 600;
-      color: #666;
+      color: #805252;
+      letter-spacing: 0.5px;
     }
+
     main {
       max-width: 950px;
       margin: 2em auto 4em;
-      background: #fff;
-      border-radius: 20px;
+      background: rgba(255,255,255,0.9);
+      border-radius: 22px;
       padding: 2.5em;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+      box-shadow: 0 8px 30px rgba(255,122,122,0.25);
     }
+
     h2 {
       text-align: center;
-      color: #ff7a7a;
+      color: #e0576d;
       margin-bottom: 0.5em;
     }
+
     .intro {
       text-align: center;
       font-size: 1.1em;
       margin-bottom: 2em;
-      color: #555;
+      color: #5b3b3b;
     }
+
     .showcase {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
       gap: 1.5em;
       margin-top: 1.5em;
     }
+
     .card {
-      background: #fafafa;
-      border-radius: 16px;
+      background: #fff;
+      border-radius: 18px;
       padding: 1.3em;
       text-align: center;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-      transition: transform 0.2s ease;
+      box-shadow: 0 6px 20px rgba(224,87,109,0.15);
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
     }
+
     .card:hover {
       transform: translateY(-4px);
+      box-shadow: 0 8px 25px rgba(224,87,109,0.25);
     }
+
     .card img {
       width: 100%;
       height: auto;
       border-radius: 12px;
       object-fit: cover;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
+
     .card h3 {
       margin-top: 0.8em;
-      color: #ff7a7a;
+      color: #e0576d;
     }
+
     .card p {
-      color: #555;
+      color: #5b3b3b;
       font-size: 0.95em;
     }
+
     footer {
       text-align: center;
       padding: 1.2em 0;
       color: #fff;
       font-size: 0.9em;
-      background: linear-gradient(90deg, #ff7a7a, #ffb36b);
+      background: linear-gradient(90deg, #e0576d, #ff7a7a, #ffb36b);
       margin-top: 2em;
+      letter-spacing: 0.3px;
+      box-shadow: 0 -2px 12px rgba(0,0,0,0.1);
     }
+
     a {
-      color: #ff7a7a;
+      color: #e0576d;
+      font-weight: 600;
       text-decoration: none;
+      transition: color 0.2s ease;
     }
+
     a:hover {
+      color: #ff9aa2;
       text-decoration: underline;
     }
+
     @media (max-width: 640px) {
       main {
         padding: 1.5em;
