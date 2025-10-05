@@ -104,6 +104,12 @@
       margin-bottom: 0.8em;
     }
 
+    .stock-count {
+      color: #c85d8c;
+      font-weight: 600;
+      margin-bottom: 1em;
+    }
+
     .reserve-btn {
       background: #ff6fa6;
       color: #fff;
@@ -155,9 +161,27 @@
 
     <section id="stock-container">
       <div class="item">
-        <img src="https://via.placeholder.com/400x300?text=Loading+..." alt="Loading">
-        <h3>Loading stock data...</h3>
-        <p>Please wait while we check current availability.</p>
+        <img src="https://via.placeholder.com/400x300?text=Painted+Cowboy+Hat" alt="Cowboy Hat">
+        <h3>Painted Cowboy Hat</h3>
+        <p>$25 — Hand-painted with rhinestone accents.</p>
+        <p class="stock-count">5 in stock</p>
+        <a href="mailto:aktwirler12@gmail.com?subject=Interested in Painted Cowboy Hat&body=Hi Abbey!%0D%0A%0D%0AI saw your Painted Cowboy Hat on the website and wanted to check if it’s still available.%0D%0A%0D%0AThanks!" class="reserve-btn">Reserve by Email</a>
+      </div>
+
+      <div class="item">
+        <img src="https://via.placeholder.com/400x300?text=Pink+Glitter+Tumbler" alt="Pink Glitter Tumbler">
+        <h3>Pink Glitter Tumbler</h3>
+        <p>$20 — Sparkly pink vinyl tumbler with heart design.</p>
+        <p class="stock-count">5 in stock</p>
+        <a href="mailto:aktwirler12@gmail.com?subject=Interested in Pink Glitter Tumbler&body=Hi Abbey!%0D%0A%0D%0AI saw your Pink Glitter Tumbler on the website and wanted to check if it’s still available.%0D%0A%0D%0AThanks!" class="reserve-btn">Reserve by Email</a>
+      </div>
+
+      <div class="item">
+        <img src="https://via.placeholder.com/400x300?text=Custom+Keychains" alt="Custom Keychains">
+        <h3>Custom Keychains</h3>
+        <p>$5 — Various designs and colors available.</p>
+        <p class="stock-count">5 in stock</p>
+        <a href="mailto:aktwirler12@gmail.com?subject=Interested in Custom Keychain&body=Hi Abbey!%0D%0A%0D%0AI saw your Custom Keychains on the website and wanted to check if they’re still available.%0D%0A%0D%0AThanks!" class="reserve-btn">Reserve by Email</a>
       </div>
     </section>
 
@@ -176,29 +200,6 @@
 
   <script>
     document.getElementById('year').textContent = new Date().getFullYear();
-
-    // 🔧 Placeholder script — later this will pull from Google Sheets
-    document.addEventListener("DOMContentLoaded", function() {
-      const stock = [
-        { name: "Painted Cowboy Hat", price: "$25", desc: "Hand-painted with rhinestone accents.", img: "https://via.placeholder.com/400x300?text=Cowboy+Hat" },
-        { name: "Pink Glitter Tumbler", price: "$20", desc: "Sparkly pink vinyl tumbler.", img: "https://via.placeholder.com/400x300?text=Tumbler" },
-        { name: "Custom Keychain", price: "$5", desc: "Various designs and colors available.", img: "https://via.placeholder.com/400x300?text=Keychain" }
-      ];
-
-      const container = document.getElementById("stock-container");
-      container.innerHTML = "";
-      stock.forEach(item => {
-        const card = document.createElement("div");
-        card.className = "item";
-        card.innerHTML = `
-          <img src="${item.img}" alt="${item.name}">
-          <h3>${item.name}</h3>
-          <p>${item.price} — ${item.desc}</p>
-          <a href="mailto:aktwirler12@gmail.com?subject=Interested in ${encodeURIComponent(item.name)}&body=Hi Abbey!%0D%0A%0D%0AI saw this ${encodeURIComponent(item.name)} on your website and wanted to check if it's still available.%0D%0A%0D%0AThanks!" class="reserve-btn">Reserve by Email</a>
-        `;
-        container.appendChild(card);
-      });
-    });
   </script>
 </body>
 </html>
