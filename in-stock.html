@@ -16,15 +16,16 @@
   <meta property="og:image" content="Images/Hat.png" />
   <meta property="og:type" content="website" />
 
-  <!-- Minimal carousel styles to complement your existing theme -->
+  <!-- PapaParse for robust CSV parsing -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js" defer></script>
+
+  <!-- Minimal carousel styles -->
   <style>
     .category-section { max-width: 1150px; margin: 1.5rem auto 2.5rem; padding: 0 1rem; }
     .category-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:.6rem; }
     .category-title { font-family:"Dancing Script",cursive; font-size:1.6rem; color:#ff7aa8; }
     .carousel-wrap { position:relative; }
-    .carousel {
-      display:flex; gap:1rem; overflow-x:auto; scroll-behavior:smooth; padding-bottom:.5rem;
-    }
+    .carousel { display:flex; gap:1rem; overflow-x:auto; scroll-behavior:smooth; padding-bottom:.5rem; }
     .carousel::-webkit-scrollbar { height:8px; }
     .carousel::-webkit-scrollbar-thumb { background:rgba(255,122,168,.35); border-radius:8px; }
     .nav-btn {
@@ -43,6 +44,7 @@
     .meta { font-size:.92rem; color:#6b2b46; }
     #last-updated { text-align:center; font-size:0.9rem; color:#6b2b46; margin:1rem 0 0; }
     .hint { text-align:center; font-size:.9rem; opacity:.85; margin-top:.4rem; }
+    #status { text-align:center; margin:1rem 0; color:#6b2b46; font-size:.95rem; }
     @media (max-width:700px){
       .card { min-width:220px; max-width:220px; }
     }
@@ -69,11 +71,8 @@
       <p>Grouped by category. Swipe horizontally on mobile, or use the arrows on desktop. New items are added often!</p>
     </section>
 
-    <section id="categories-root">
-      <div class="grid">
-        <p>Loading latest items…</p>
-      </div>
-    </section>
+    <div id="status">Loading latest items…</div>
+    <section id="categories-root"></section>
 
     <p id="last-updated"></p>
     <p class="hint">Prices may use default category pricing if not specified in the sheet.</p>
@@ -83,21 +82,18 @@
     <p>&copy; 2025 Abbey’s Creations. All designs handmade with love.</p>
   </footer>
 
-  <!-- Live Google Sheet Sync + Carousel builder -->
   <script>
-    const SHEET_URL =
-      "https://docs.google.com/spreadsheets/d/1eJjPiFqgWMJxwEGPlo1e3hFo2i_M0jpXnUVygpEl5mA/gviz/tq?tqx=out:csv"
-    // Default prices by Category if "Price" cell is empty
+    const SHEET_URL = "https://docs.google.com/spreadsheets/d/1eJjPiFqgWMJxwEGPlo1e3hFo2i_M0jpXnUVygpEl5mA/gviz/tq?tqx=out:csv";
+
+    // Default prices by Category if "Price" is blank
     const CATEGORY_DEFAULTS = {
       "Keychains": "$3",
       "Cups": "$10",
       "Hats": "$15",
       "Records": "$20",
       "Canvas Art": "$18"
-      // Add more categories & defaults here if needed
     };
 
-    // Optional: control the order categories appear in (else alphabetical)
     const CATEGORY_ORDER = ["Cups","Keychains","Hats","Records","Canvas Art"];
 
     function priceFor(category, explicit) {
@@ -133,7 +129,6 @@
 
       nav.appendChild(leftBtn);
       nav.appendChild(rightBtn);
-
       header.appendChild(h3);
       header.appendChild(nav);
 
@@ -144,7 +139,6 @@
       row.className = "carousel";
       row.id = `carousel-${sectionIndex}`;
 
-      // Build cards
       items.forEach(prod => {
         const { item, price, qty, image, desc, category } = prod;
 
@@ -158,7 +152,6 @@
           <a class="cta" href="mailto:example@email.com?subject=Order%20${encodeURIComponent(category + ' - ' + item)}">Order Now</a>
         `;
 
-        // Sold out overlay
         const isSoldOut = (Number(qty) <= 0 || String(qty).toLowerCase() === "sold out");
         if (isSoldOut) {
           const overlay = document.createElement("div");
@@ -175,61 +168,83 @@
       section.appendChild(wrap);
       root.appendChild(section);
 
-      // Button scroll behavior
-      const scrollBy = 320; // px
+      const scrollBy = 320;
       leftBtn.addEventListener("click", () => row.scrollBy({ left: -scrollBy, behavior: "smooth" }));
       rightBtn.addEventListener("click", () => row.scrollBy({ left: scrollBy, behavior: "smooth" }));
     }
 
     async function loadSheetData() {
+      const status = document.getElementById("status");
       const root = document.getElementById("categories-root");
       const timestamp = document.getElementById("last-updated");
 
       try {
-        const res = await fetch(SHEET_URL);
-        const text = await res.text();
-        const json = JSON.parse(text.substring(47).slice(0, -2)); // strip Google wrapper
-        const rows = json.table.rows;
+        const res = await fetch(SHEET_URL, { cache: "no-store" });
+        const csvText = await res.text();
 
-        // Build product objects and group by category
+        const parsed = Papa.parse(csvText, { header: true, skipEmptyLines: true });
+        if (parsed.errors.length) {
+          console.warn("CSV parse warnings:", parsed.errors);
+        }
+
+        // Normalize headers we care about
+        const rows = (parsed.data || []).map(r => {
+          return {
+            item: (r["Item"] || r["item"] || "").toString().trim(),
+            price: (r["Price"] || r["price"] || "").toString().trim(),
+            qty: (r["Quantity"] || r["quantity"] || "").toString().trim(),
+            image: (r["Image"] || r["image"] || "").toString().trim(),
+            desc: (r["Description"] || r["description"] || "").toString().trim(),
+            category: (r["Category"] || r["category"] || "").toString().trim()
+          };
+        }).filter(r => r.item && r.category);
+
+        if (!rows.length) {
+          status.textContent = "No items found. Check sheet headers and rows.";
+          return;
+        }
+
+        // Group by category
         const groups = {};
-        rows.forEach(r => {
-          const [item, price, qty, image, desc, category] = (r.c || []).map(c => c ? c.v : "");
-
-          if (!item || !category) return; // skip incomplete rows
-          const prod = { item, price, qty, image, desc, category };
-
-          if (!groups[category]) groups[category] = [];
-          groups[category].push(prod);
+        rows.forEach(p => {
+          if (!groups[p.category]) groups[p.category] = [];
+          groups[p.category].push(p);
         });
 
-        // Clear loader
+        // Clear status and render
+        status.textContent = "";
         root.innerHTML = "";
 
-        // Determine category order
         const categories = Object.keys(groups);
         const ordered = [
           ...CATEGORY_ORDER.filter(c => categories.includes(c)),
           ...categories.filter(c => !CATEGORY_ORDER.includes(c)).sort()
         ];
 
-        // Render each category as a horizontal carousel
         let idx = 0;
         ordered.forEach(cat => {
-          const items = groups[cat].filter(p => p.item); // safety
-          if (items.length) createCategorySection(cat, items, idx++);
+          const items = groups[cat];
+          if (items && items.length) createCategorySection(cat, items, idx++);
         });
 
-        const now = new Date();
-        timestamp.textContent = "Last updated: " + now.toLocaleString();
+        timestamp.textContent = "Last updated: " + new Date().toLocaleString();
       } catch (e) {
         console.error("Error loading sheet data:", e);
-        root.innerHTML = `<div class="grid"><p>Unable to load items right now.</p></div>`;
+        status.textContent = "Unable to load items right now.";
         timestamp.textContent = "";
       }
     }
 
-    loadSheetData();
+    window.addEventListener("load", () => {
+      // Ensure PapaParse is loaded, then run
+      if (window.Papa) loadSheetData();
+      else {
+        document.getElementById("status").textContent = "Loading parser…";
+        const wait = setInterval(() => {
+          if (window.Papa) { clearInterval(wait); loadSheetData(); }
+        }, 100);
+      }
+    });
   </script>
 </body>
 </html>
