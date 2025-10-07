@@ -38,33 +38,59 @@
     </section>
 
     <section class="showcase">
-      <div class="grid">
-        <div class="card">
-          <img src="Images/Cup.png" alt="Painted Cup" loading="lazy">
-          <h3>Painted Cup</h3>
-          <p>Hand-painted 12oz cup — 3 available.</p>
-          <a class="cta" href="mailto:example@email.com?subject=Order%20Painted%20Cup">Order Now</a>
-        </div>
-
-        <div class="card">
-          <img src="Images/Hat.png" alt="Painted Hat" loading="lazy">
-          <h3>Custom Hat</h3>
-          <p>Hand-painted hat — 2 available.</p>
-          <a class="cta" href="mailto:example@email.com?subject=Order%20Custom%20Hat">Order Now</a>
-        </div>
-
-        <div class="card">
-          <img src="Images/Record.png" alt="Painted Record" loading="lazy">
-          <h3>Painted Record</h3>
-          <p>Decorative vinyl record — 1 available.</p>
-          <a class="cta" href="mailto:example@email.com?subject=Order%20Painted%20Record">Order Now</a>
-        </div>
+      <div class="grid" id="stock-grid">
+        <p>Loading latest items...</p>
       </div>
+      <p id="last-updated" style="text-align:center; font-size:0.9rem; color:#6b2b46; margin-top:1rem;"></p>
     </section>
   </main>
 
   <footer>
     <p>&copy; 2025 Abbey’s Creations. All designs handmade with love.</p>
   </footer>
+
+  <!-- Live Google Sheet Sync -->
+  <script>
+    const SHEET_URL = "https://docs.google.com/spreadsheets/d/1UbcUkLrRsTNpOTOBqvHbro_qKQkXTEJ7CeHDKkkMyFw/gviz/tq?tqx=out:json";
+
+    async function loadSheetData() {
+      const grid = document.getElementById("stock-grid");
+      const timestamp = document.getElementById("last-updated");
+
+      try {
+        const response = await fetch(SHEET_URL);
+        const text = await response.text();
+        const json = JSON.parse(text.substring(47).slice(0, -2)); // Clean up weird JSON prefix
+        const rows = json.table.rows;
+
+        grid.innerHTML = ""; // clear existing content
+
+        rows.forEach(row => {
+          const [item, price, qty, image, desc] = row.c.map(c => c ? c.v : "");
+          if (!item) return; // skip empty rows
+
+          const card = document.createElement("div");
+          card.classList.add("card");
+          card.innerHTML = `
+            <img src="${image}" alt="${item}" loading="lazy">
+            <h3>${item}</h3>
+            <p>${desc}</p>
+            <p><strong>${price}</strong> — ${qty} available</p>
+            <a class="cta" href="mailto:example@email.com?subject=Order%20${encodeURIComponent(item)}">Order Now</a>
+          `;
+          grid.appendChild(card);
+        });
+
+        const now = new Date();
+        timestamp.textContent = "Last updated: " + now.toLocaleString();
+      } catch (err) {
+        console.error("Error loading sheet data:", err);
+        grid.innerHTML = "<p>Unable to load items right now.</p>";
+        timestamp.textContent = "";
+      }
+    }
+
+    loadSheetData();
+  </script>
 </body>
 </html>
