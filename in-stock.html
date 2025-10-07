@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>In Stock | Abbey’s Creations</title>
-  <meta name="description" content="See what handmade creations are currently in stock at Abbey’s Creations. Cups, hats, records, and more!" />
+  <meta name="description" content="See what handmade creations are currently in stock at Abbey’s Creations. Cups, keychains, hats, records, canvas art and more!" />
   <link rel="icon" href="Images/Cup.png" type="image/png" />
 
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,9 +12,41 @@
   <link rel="stylesheet" href="css/style.css" />
 
   <meta property="og:title" content="In Stock | Abbey’s Creations" />
-  <meta property="og:description" content="Browse the latest handmade creations from Abbey’s Creations — cups, hats, records, and more." />
+  <meta property="og:description" content="Browse the latest handmade creations from Abbey’s Creations — cups, keychains, hats, records, and more." />
   <meta property="og:image" content="Images/Hat.png" />
   <meta property="og:type" content="website" />
+
+  <!-- Minimal carousel styles to complement your existing theme -->
+  <style>
+    .category-section { max-width: 1150px; margin: 1.5rem auto 2.5rem; padding: 0 1rem; }
+    .category-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:.6rem; }
+    .category-title { font-family:"Dancing Script",cursive; font-size:1.6rem; color:#ff7aa8; }
+    .carousel-wrap { position:relative; }
+    .carousel {
+      display:flex; gap:1rem; overflow-x:auto; scroll-behavior:smooth; padding-bottom:.5rem;
+    }
+    .carousel::-webkit-scrollbar { height:8px; }
+    .carousel::-webkit-scrollbar-thumb { background:rgba(255,122,168,.35); border-radius:8px; }
+    .nav-btn {
+      background:#fff; border:none; box-shadow:0 6px 25px rgba(255, 122, 168, 0.25);
+      width:36px; height:36px; border-radius:50%; cursor:pointer; color:#ff7aa8; font-weight:700;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .nav-btn:hover { background:#ff7aa8; color:#fff; }
+    .nav-group { display:flex; gap:.5rem; }
+    .card { min-width:260px; max-width:260px; position:relative; }
+    .soldout {
+      position:absolute; inset:10px; background:rgba(255,255,255,.82); border-radius:12px;
+      display:flex; align-items:center; justify-content:center; font-weight:700; color:#6b2b46;
+      border:2px dashed rgba(255,122,168,.6);
+    }
+    .meta { font-size:.92rem; color:#6b2b46; }
+    #last-updated { text-align:center; font-size:0.9rem; color:#6b2b46; margin:1rem 0 0; }
+    .hint { text-align:center; font-size:.9rem; opacity:.85; margin-top:.4rem; }
+    @media (max-width:700px){
+      .card { min-width:220px; max-width:220px; }
+    }
+  </style>
 </head>
 
 <body class="instock">
@@ -34,58 +66,166 @@
   <main id="main">
     <section class="hero">
       <h2>Available Creations</h2>
-      <p>These are ready to order right now! Each piece is unique — when it’s gone, it’s gone.</p>
+      <p>Grouped by category. Swipe horizontally on mobile, or use the arrows on desktop. New items are added often!</p>
     </section>
 
-    <section class="showcase">
-      <div class="grid" id="stock-grid">
-        <p>Loading latest items...</p>
+    <section id="categories-root">
+      <div class="grid">
+        <p>Loading latest items…</p>
       </div>
-      <p id="last-updated" style="text-align:center; font-size:0.9rem; color:#6b2b46; margin-top:1rem;"></p>
     </section>
+
+    <p id="last-updated"></p>
+    <p class="hint">Prices may use default category pricing if not specified in the sheet.</p>
   </main>
 
   <footer>
     <p>&copy; 2025 Abbey’s Creations. All designs handmade with love.</p>
   </footer>
 
-  <!-- Live Google Sheet Sync -->
+  <!-- Live Google Sheet Sync + Carousel builder -->
   <script>
-    const SHEET_URL = "https://docs.google.com/spreadsheets/d/1UbcUkLrRsTNpOTOBqvHbro_qKQkXTEJ7CeHDKkkMyFw/gviz/tq?tqx=out:json";
+    const SHEET_URL =
+      "https://docs.google.com/spreadsheets/d/1UbcUkLrRsTNpOTOBqvHbro_qKQkXTEJ7CeHDKkkMyFw/gviz/tq?tqx=out:json";
+
+    // Default prices by Category if "Price" cell is empty
+    const CATEGORY_DEFAULTS = {
+      "Keychains": "$3",
+      "Cups": "$10",
+      "Hats": "$15",
+      "Records": "$20",
+      "Canvas Art": "$18"
+      // Add more categories & defaults here if needed
+    };
+
+    // Optional: control the order categories appear in (else alphabetical)
+    const CATEGORY_ORDER = ["Cups","Keychains","Hats","Records","Canvas Art"];
+
+    function priceFor(category, explicit) {
+      if (explicit && String(explicit).trim() !== "") return explicit;
+      return CATEGORY_DEFAULTS[category] || "";
+    }
+
+    function createCategorySection(title, items, sectionIndex) {
+      const root = document.getElementById("categories-root");
+
+      const section = document.createElement("div");
+      section.className = "category-section";
+
+      const header = document.createElement("div");
+      header.className = "category-header";
+
+      const h3 = document.createElement("h3");
+      h3.className = "category-title";
+      h3.textContent = title;
+
+      const nav = document.createElement("div");
+      nav.className = "nav-group";
+
+      const leftBtn = document.createElement("button");
+      leftBtn.className = "nav-btn";
+      leftBtn.setAttribute("aria-label", `Scroll ${title} left`);
+      leftBtn.textContent = "‹";
+
+      const rightBtn = document.createElement("button");
+      rightBtn.className = "nav-btn";
+      rightBtn.setAttribute("aria-label", `Scroll ${title} right`);
+      rightBtn.textContent = "›";
+
+      nav.appendChild(leftBtn);
+      nav.appendChild(rightBtn);
+
+      header.appendChild(h3);
+      header.appendChild(nav);
+
+      const wrap = document.createElement("div");
+      wrap.className = "carousel-wrap";
+
+      const row = document.createElement("div");
+      row.className = "carousel";
+      row.id = `carousel-${sectionIndex}`;
+
+      // Build cards
+      items.forEach(prod => {
+        const { item, price, qty, image, desc, category } = prod;
+
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <img src="${image}" alt="${item}" loading="lazy">
+          <h3>${item}</h3>
+          <p>${desc || ""}</p>
+          <p class="meta"><strong>${priceFor(category, price)}</strong> — ${qty} available</p>
+          <a class="cta" href="mailto:example@email.com?subject=Order%20${encodeURIComponent(category + ' - ' + item)}">Order Now</a>
+        `;
+
+        // Sold out overlay
+        const isSoldOut = (Number(qty) <= 0 || String(qty).toLowerCase() === "sold out");
+        if (isSoldOut) {
+          const overlay = document.createElement("div");
+          overlay.className = "soldout";
+          overlay.textContent = "SOLD OUT";
+          card.appendChild(overlay);
+        }
+
+        row.appendChild(card);
+      });
+
+      wrap.appendChild(row);
+      section.appendChild(header);
+      section.appendChild(wrap);
+      root.appendChild(section);
+
+      // Button scroll behavior
+      const scrollBy = 320; // px
+      leftBtn.addEventListener("click", () => row.scrollBy({ left: -scrollBy, behavior: "smooth" }));
+      rightBtn.addEventListener("click", () => row.scrollBy({ left: scrollBy, behavior: "smooth" }));
+    }
 
     async function loadSheetData() {
-      const grid = document.getElementById("stock-grid");
+      const root = document.getElementById("categories-root");
       const timestamp = document.getElementById("last-updated");
 
       try {
-        const response = await fetch(SHEET_URL);
-        const text = await response.text();
-        const json = JSON.parse(text.substring(47).slice(0, -2)); // Clean up weird JSON prefix
+        const res = await fetch(SHEET_URL);
+        const text = await res.text();
+        const json = JSON.parse(text.substring(47).slice(0, -2)); // strip Google wrapper
         const rows = json.table.rows;
 
-        grid.innerHTML = ""; // clear existing content
+        // Build product objects and group by category
+        const groups = {};
+        rows.forEach(r => {
+          const [item, price, qty, image, desc, category] = (r.c || []).map(c => c ? c.v : "");
 
-        rows.forEach(row => {
-          const [item, price, qty, image, desc] = row.c.map(c => c ? c.v : "");
-          if (!item) return; // skip empty rows
+          if (!item || !category) return; // skip incomplete rows
+          const prod = { item, price, qty, image, desc, category };
 
-          const card = document.createElement("div");
-          card.classList.add("card");
-          card.innerHTML = `
-            <img src="${image}" alt="${item}" loading="lazy">
-            <h3>${item}</h3>
-            <p>${desc}</p>
-            <p><strong>${price}</strong> — ${qty} available</p>
-            <a class="cta" href="mailto:example@email.com?subject=Order%20${encodeURIComponent(item)}">Order Now</a>
-          `;
-          grid.appendChild(card);
+          if (!groups[category]) groups[category] = [];
+          groups[category].push(prod);
+        });
+
+        // Clear loader
+        root.innerHTML = "";
+
+        // Determine category order
+        const categories = Object.keys(groups);
+        const ordered = [
+          ...CATEGORY_ORDER.filter(c => categories.includes(c)),
+          ...categories.filter(c => !CATEGORY_ORDER.includes(c)).sort()
+        ];
+
+        // Render each category as a horizontal carousel
+        let idx = 0;
+        ordered.forEach(cat => {
+          const items = groups[cat].filter(p => p.item); // safety
+          if (items.length) createCategorySection(cat, items, idx++);
         });
 
         const now = new Date();
         timestamp.textContent = "Last updated: " + now.toLocaleString();
-      } catch (err) {
-        console.error("Error loading sheet data:", err);
-        grid.innerHTML = "<p>Unable to load items right now.</p>";
+      } catch (e) {
+        console.error("Error loading sheet data:", e);
+        root.innerHTML = `<div class="grid"><p>Unable to load items right now.</p></div>`;
         timestamp.textContent = "";
       }
     }
